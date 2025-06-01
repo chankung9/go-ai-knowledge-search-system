@@ -37,3 +37,6 @@ go.work.sum
 
 # Ignore storage directory for uploaded files (if used)
 storage/
+
+# Mock
+mock/

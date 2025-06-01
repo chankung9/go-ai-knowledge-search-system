@@ -2,14 +2,18 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+
+	"github.com/chankung9/go-ai-knowledge-search-system/internal/handlers"
 )
 
 func main() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "Go AI Knowledge Search System backend is running!")
-	})
+	// Register HTTP handlers
+	http.HandleFunc("/upload", handlers.UploadHandler)
 
-	fmt.Println("Server started at http://localhost:8080")
-	http.ListenAndServe(":8080", nil)
+	fmt.Println("Server started at :8080")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatalf("Server failed: %v", err)
+	}
 }
