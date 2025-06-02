@@ -22,14 +22,20 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	tempDir := os.TempDir()
-	tempFile := filepath.Join(tempDir, header.Filename)
-	out, err := os.Create(tempFile)
+	// Sanitize the filename to prevent path traversal
+	safeFilename := filepath.Base(header.Filename)
+
+	// Create a temporary file with a unique name
+	out, err := os.CreateTemp("", "upload-*-"+safeFilename)
 	if err != nil {
-		http.Error(w, "Unable to create the file", http.StatusInternalServerError)
+		http.Error(w, "Unable to create temporary file", http.StatusInternalServerError)
 		return
 	}
 	defer out.Close()
+	// Get the path of the created temporary file for later use and cleanup
+	tempFile := out.Name()
+	defer os.Remove(tempFile) // Ensure the temporary file is removed after processing
+
 	_, err = io.Copy(out, file)
 	if err != nil {
 		http.Error(w, "Unable to save the file", http.StatusInternalServerError)

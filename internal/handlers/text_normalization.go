@@ -11,16 +11,20 @@ import (
 func NormalizePDFText(raw string) string {
 	lines := strings.Split(raw, "\n")
 	singleCharLines := 0
-	totalChars := 0
+	nonEmptyLines := 0
 	for _, l := range lines {
-		totalChars += len([]rune(l))
-		if len([]rune(strings.TrimSpace(l))) <= 1 && len(strings.TrimSpace(l)) > 0 {
+		trimmedLine := strings.TrimSpace(l)
+		if len(trimmedLine) > 0 {
+			nonEmptyLines++
+		}
+		if len([]rune(trimmedLine)) == 1 {
 			singleCharLines++
 		}
 	}
 	// If majority of non-empty lines are single characters, collapse
-	if singleCharLines > len(lines)/2 {
-		// Optionally, remove any non-printable characters
+	// Use nonEmptyLines for the comparison, ensuring it's not zero to avoid division by zero
+	if nonEmptyLines > 0 && singleCharLines > nonEmptyLines/2 {
+		// Reconstruct string from single, printable characters found on their own lines
 		var builder strings.Builder
 		for _, l := range lines {
 			c := []rune(strings.TrimSpace(l))
