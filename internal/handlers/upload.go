@@ -1,66 +1,59 @@
 package handlers
 
 import (
-	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 )
 
-const uploadPath = "./storage"
-
+// UploadHandler handles PDF uploads and text extraction.
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		log.Printf("[ERROR] Method not allowed: %s\n", r.Method)
+		http.ServeFile(w, r, "upload.html")
 		return
 	}
 
-	// Ensure storage directory exists
-	if err := os.MkdirAll(uploadPath, os.ModePerm); err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		log.Printf("[ERROR] Failed to create upload directory: %v\n", err)
-		return
-	}
-
-	// Parse multipart form with max 10 MB files
-	err := r.ParseMultipartForm(10 << 20)
+	file, header, err := r.FormFile("pdf")
 	if err != nil {
-		http.Error(w, "Error parsing form: "+err.Error(), http.StatusBadRequest)
-		log.Printf("[ERROR] Error parsing multipart form: %v\n", err)
-		return
-	}
-
-	file, handler, err := r.FormFile("file")
-	if err != nil {
-		http.Error(w, "Error retrieving the file: "+err.Error(), http.StatusBadRequest)
-		log.Printf("[ERROR] Error retrieving the file: %v\n", err)
+		http.Error(w, "Error retrieving the file", http.StatusBadRequest)
 		return
 	}
 	defer file.Close()
 
-	if filepath.Ext(handler.Filename) != ".pdf" {
-		http.Error(w, "Only PDF files are allowed", http.StatusBadRequest)
-		log.Printf("[ERROR] Invalid file extension: %s\n", handler.Filename)
-		return
-	}
+	// Sanitize the filename to prevent path traversal
+	safeFilename := filepath.Base(header.Filename)
 
-	dstPath := filepath.Join(uploadPath, handler.Filename)
-	dst, err := os.Create(dstPath)
+	// Create a temporary file with a unique name
+	out, err := os.CreateTemp("", "upload-*-"+safeFilename)
 	if err != nil {
-		http.Error(w, "Unable to save the file: "+err.Error(), http.StatusInternalServerError)
-		log.Printf("[ERROR] Unable to save the file: %v\n", err)
+		http.Error(w, "Unable to create temporary file", http.StatusInternalServerError)
 		return
 	}
-	defer dst.Close()
+	defer out.Close()
+	// Get the path of the created temporary file for later use and cleanup
+	tempFile := out.Name()
+	defer os.Remove(tempFile) // Ensure the temporary file is removed after processing
 
-	if _, err := dst.ReadFrom(file); err != nil {
-		http.Error(w, "Failed to write file: "+err.Error(), http.StatusInternalServerError)
-		log.Printf("[ERROR] Failed to write file: %v\n", err)
+	_, err = io.Copy(out, file)
+	if err != nil {
+		http.Error(w, "Unable to save the file", http.StatusInternalServerError)
 		return
 	}
 
-	fmt.Fprintf(w, "File uploaded successfully: %s\n", handler.Filename)
-	log.Printf("[INFO] File uploaded successfully: %s\n", handler.Filename)
+	text, err := ExtractTextFromPDF(tempFile)
+	if err != nil {
+		// Log the technical error for debugging
+		log.Printf("PDF extraction error: %v", err)
+		// Show a friendly error to the user
+		http.Error(w, "The uploaded file is not a valid PDF or could not be processed. Please check your file and try again.", http.StatusBadRequest)
+		return
+	}
+
+	// Normalize the extracted text before further processing or response
+	normalizedText := NormalizePDFText(text)
+
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Write([]byte(normalizedText))
 }

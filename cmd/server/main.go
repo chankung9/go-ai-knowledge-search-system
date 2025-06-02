@@ -9,11 +9,7 @@ import (
 )
 
 func main() {
-	// Register HTTP handlers
 	http.HandleFunc("/upload", handlers.UploadHandler)
-
-	fmt.Println("Server started at :8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		log.Fatalf("Server failed: %v", err)
-	}
+	fmt.Println("Server running at http://localhost:8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }

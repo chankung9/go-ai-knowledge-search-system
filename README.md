@@ -38,3 +38,23 @@ go-ai-knowledge-search-system/
 - Implement PDF text extraction in `internal/handlers/extract.go`.
 - Add semantic search and vector storage.
 - Build frontend interface.
+
+## PDF Extraction and Testing
+
+This project robustly extracts and normalizes text from PDF uploads. The normalization removes excess whitespace and ensures extracted text is suitable for knowledge search.
+
+### Test Coverage
+
+- ✅ Valid PDF extraction and normalization
+- ✅ Negative cases (invalid/corrupt PDFs)
+- ✅ Multi-line/paragraph PDF extraction
+
+### Running Tests
+
+To run all tests:
+
+```sh
+go test -v ./...
+```
+
+Continuous Integration runs these tests automatically on pull requests.
