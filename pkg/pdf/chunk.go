@@ -5,13 +5,17 @@ import (
 	"strings"
 )
 
+var (
+	whitespaceRegex   = regexp.MustCompile(`\s+`)
+	controlCharRegex = regexp.MustCompile(`[\x00-\x08\x0B-\x1F\x7F]`)
+)
+
 // PreprocessText cleans up text for embedding and search.
 func PreprocessText(input string) string {
 	// Replace multiple whitespaces with a single space
-	re := regexp.MustCompile(`\s+`)
-	cleaned := re.ReplaceAllString(input, " ")
+	cleaned := whitespaceRegex.ReplaceAllString(input, " ")
 	// Remove non-printable/control characters (except newlines)
-	cleaned = regexp.MustCompile(`[\x00-\x08\x0B-\x1F\x7F]`).ReplaceAllString(cleaned, "")
+	cleaned = controlCharRegex.ReplaceAllString(cleaned, "")
 	// Trim leading/trailing whitespace
 	cleaned = strings.TrimSpace(cleaned)
 	return cleaned
