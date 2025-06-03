@@ -13,6 +13,7 @@ require (
 	github.com/go-playground/validator/v10 v10.26.0
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/kelseyhightower/envconfig v1.4.0
+	github.com/mattn/go-sqlite3 v1.14.28
 	github.com/spf13/viper v1.20.1
 )
 
