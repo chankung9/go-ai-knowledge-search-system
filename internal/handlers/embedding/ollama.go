@@ -5,6 +5,8 @@ type OllamaConfig struct {
 	Model    string // e.g., "nomic-embed-text"
 }
 
+var _ EmbeddingAPI = (*OllamaEmbeddingClient)(nil)
+
 type OllamaEmbeddingClient struct {
 	config OllamaConfig
 }

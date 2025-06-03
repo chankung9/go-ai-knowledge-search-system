@@ -5,6 +5,8 @@ type OpenAIConfig struct {
 	Model  string // e.g. "text-embedding-ada-002"
 }
 
+var _ EmbeddingAPI = (*OpenAIEmbeddingClient)(nil)
+
 type OpenAIEmbeddingClient struct {
 	config OpenAIConfig
 }
