@@ -4,6 +4,9 @@ go 1.23.0
 
 toolchain go1.23.9
 
-require rsc.io/pdf v0.1.1
+require (
+	github.com/google/uuid v1.6.0
+	rsc.io/pdf v0.1.1
+)
 
-require github.com/jung-kurt/gofpdf v1.16.2 // indirect
+require github.com/jung-kurt/gofpdf v1.16.2

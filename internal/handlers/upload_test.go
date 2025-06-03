@@ -60,7 +60,7 @@ func TestUploadHandler(t *testing.T) {
 			args: args{
 				filePath:     "../../mocks/good.pdf",
 				expectedCode: http.StatusOK,
-				expectedBody: "Hello,PDFWorld!",
+				expectedBody: "Chunkscreated:1",
 				normalize:    true,
 			},
 			expectedError: nil,
@@ -80,7 +80,7 @@ func TestUploadHandler(t *testing.T) {
 			args: args{
 				filePath:     "../../mocks/multiline.pdf",
 				expectedCode: http.StatusOK,
-				expectedBody: "Hello,PDFWorld!Thisisthesecondline.Andhereisanewparagraph.Withanotherline.",
+				expectedBody: "Chunkscreated:1",
 				normalize:    true,
 			},
 			expectedError: nil,
