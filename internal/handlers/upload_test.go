@@ -12,20 +12,10 @@ import (
 	"testing"
 
 	eMocks "github.com/chankung9/go-ai-knowledge-search-system/pkg/embedding/mocks"
-	"github.com/chankung9/go-ai-knowledge-search-system/pkg/vector"
+	vMocks "github.com/chankung9/go-ai-knowledge-search-system/pkg/vector/mocks"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
-
-// --- Mock VectorStore (no change needed) ---
-type mockVectorStore struct {
-	Inserted []vector.VectorRecord
-}
-
-func (m *mockVectorStore) Insert(rec vector.VectorRecord) error {
-	m.Inserted = append(m.Inserted, rec)
-	return nil
-}
 
 // --- Test helpers ---
 
@@ -37,7 +27,8 @@ type args struct {
 }
 
 type fields struct {
-	Embedder *eMocks.EmbeddingAPI
+	Embedder    *eMocks.EmbeddingAPI
+	VectorStore *vMocks.VectorStore
 }
 
 type testCase struct {
@@ -87,6 +78,7 @@ func TestUploadHandler(t *testing.T) {
 			},
 			prepare: func(f *fields, a args) {
 				f.Embedder.On("Embed", mock.Anything).Return([][]float32{{0.1, 0.2, 0.3}}, nil).Once()
+				f.VectorStore.On("Insert", mock.AnythingOfType("vector.VectorRecord")).Return(nil).Once()
 			},
 		},
 		{
@@ -109,6 +101,7 @@ func TestUploadHandler(t *testing.T) {
 			},
 			prepare: func(f *fields, a args) {
 				f.Embedder.On("Embed", mock.Anything).Return([][]float32{{0.5, 0.6, 0.7}}, nil).Once()
+				f.VectorStore.On("Insert", mock.AnythingOfType("vector.VectorRecord")).Return(nil).Once()
 			},
 		},
 	}
@@ -116,20 +109,20 @@ func TestUploadHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := fields{
-				Embedder: eMocks.NewEmbeddingAPI(t), // mockery-generated constructor
+				Embedder:    eMocks.NewEmbeddingAPI(t), // mockery-generated constructor
+				VectorStore: vMocks.NewVectorStore(t),  // mockery-generated constructor
 			}
 			if tt.prepare != nil {
 				tt.prepare(&f, tt.args)
 			}
 
-			vectorStore := &mockVectorStore{}
 			req, err := newFileUploadRequest("/upload", "pdf", tt.args.filePath)
 			require.NoError(t, err)
 
 			rr := httptest.NewRecorder()
 			cfg := UploadHandlerCfg{
 				Embedder:    f.Embedder,
-				VectorStore: vectorStore,
+				VectorStore: f.VectorStore,
 			}
 			handler := UploadHandler(cfg)
 			handler.ServeHTTP(rr, req)
@@ -151,6 +144,7 @@ func TestUploadHandler(t *testing.T) {
 
 			if tt.prepare != nil {
 				f.Embedder.AssertExpectations(t)
+				f.VectorStore.AssertExpectations(t)
 			}
 		})
 	}
