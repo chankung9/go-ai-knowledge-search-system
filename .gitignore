@@ -36,4 +36,4 @@ go.work.sum
 # .vscode/
 
 # Ignore storage directory for uploaded files (if used)
-storage/
+/storage/
